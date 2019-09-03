@@ -1,0 +1,771 @@
+#Chap 2. R을 활용한 텍스트 분석 소개 소스코드
+
+txt1 <- "Start R programming with R-LOVE book."
+txt1
+
+strsplit(txt1," ")
+
+ install.packages(“KoNLP”)
+ library(KoNLP)
+
+ txt2 <- "R맹이 책으로 R 프로그래밍을 시작하세요~!"
+ txt2
+
+ strsplit(txt2," ")
+ extractNoun(txt2)
+
+
+# 2. KoNLP 패키지로 한글 분석하는 예
+
+#Step 1. 작업디렉토리 설정하고 필요한 패키지를 설치 및 구동합니다 
+ setwd("c:\\a_temp")  
+ install.packages("KoNLP") 
+ install.packages("wordcloud") 
+ install.packages("stringr")
+
+ library(KoNLP)  		# 한글 형태소
+ library(wordcloud)		# 워드클라우드
+ library(stringr)		# ??
+
+ useSejongDic()
+
+#Step 2. 분석할 파일을 불러옵니다
+  data1 <- readLines("좋아하는과일2.txt") 
+  data1
+
+#Step 3. 중복되는 리뷰를 제거해야 할 경우 아래 명령을 수행합니다. 
+  data1 <- unique(data1) 
+  data1
+
+ #Step 4. 특수 기호를 모두 제거합니다.
+  data1 <- str_replace_all(data1,"[^[:alpha:][:blank:]]","")
+  data1
+
+ #Step 5. 아래 과정이 불러온 리뷰 문장을 단어로 분리하는 과정입니다.
+  data2 <- extractNoun(data1)
+  data2
+
+ #Step 6. 한 줄 안에서 중복되는 단어를 제거해야 할 경우 아래의 명령을 수행합니다.
+  data2 <- sapply(data2, unique)
+  data2
+
+#Step 7. 띄어 쓰기가 안되어 있는 긴 문장(단어)을 제거해야 할 경우 아래 명령을 수행합니다.
+# 이 작업을 하는 명령어는 Filter( ) 함수인데 벡터로 데이터를 넣아야 합니다.
+# 그래서 unlist( ) 함수로 list( ) 형태의 데이터를 벡터 형태로 변형해야 합니다.
+
+  data3 <- unlist(data2)
+  head(data3,5)
+
+  data4 <- Filter(function(x) {nchar(x) <= 20 & nchar(x) > 1} , data3)
+  data4
+
+#Step 8. 아래 과정이 필요 없는 단어들이나 기호를 제거하는 과정입니다.
+  
+  data4 <- gsub("\\.","",data4)
+  data4 <- gsub(" ","",data4)
+  data4 <- gsub("\\' ","",data4)
+  data4 <- gsub("\\^","",data4)
+  data4
+
+ #Step 9. 추출된 키워드를 임시로 확인하기 위해 집계해 봅니다.
+  wordcount <- table(data4) 
+  head(sort(wordcount, decreasing=T),50
+
+  txt <- readLines("과일gsub.txt")
+  cnt_txt <- length(txt)
+  cnt_txt
+
+  for( i in 1:cnt_txt) {
+       data4 <-gsub((txt[i]),"",data4)     
+     }
+  data4
+
+# 위 작업을 하고 나서 삭제된 공백이나 1글자 이하의 글자를 제거하기 위해 아래 명령을 
+# 수행합니다.
+  data4 <- Filter(function(x) {nchar(x) <= 10 & nchar(x) > 1} ,data4)
+  data4
+
+ #Step 10. 최종 결과를 집계하여 워드 클라우드로 시각화 합니다.
+  wordcount <- table(data4) 
+  wordcount 
+  palete <- brewer.pal(9,"Set3") 
+  wordcloud(names(wordcount),freq=wordcount,scale=c(5,1),rot.per=0.25,min.freq=1,
+  random.order=F,random.color=T,colors=palete)
+
+#예제 1. 경주 여행지 추천 키워드 분석하기 
+#  Step 1. 작업 디렉토리 설정하고 필요 패키지 설치 및 실행하기
+setwd("c:\\temp\\")  
+install.packages("KoNLP") 
+install.packages("wordcloud") 
+install.packages("stringr")
+
+library(stringr)
+library(KoNLP)  
+library(wordcloud)
+ useSejongDic() 
+
+# Step 2. 분석할 파일 불러오기
+data1 <- readLines("경주여행_지식인_2016.txt" , encoding="UTF-8")
+head(data1,10)  # 잘 불러졌는지 앞부분의 10줄만 보고 확인하기
+length(data1)   # 분석해야 할 텍스트가 총 몇 줄인지 확인
+
+# Step 3. 중복값 제거하고 필요 없는 특수문자 제거한 후 명사만 추출하기
+data1 <- unique(data1)
+data2 <- str_replace_all(data1,"[^[:alpha:][:digit:]]"," ")
+
+data3 <- extractNoun(data2)
+head(data3,5)
+
+# Step 4. 불용어 제거 및 용어 정리하기
+data4 <- lapply(data3, unique) # 각 리스트안에서 중복된 단어들 제거하기
+
+data5 <- gsub("\\d+", "", unlist(data4)) 
+data5 <- gsub("스프링", "스프링돔", data5) 
+data5 <- gsub("파크", "워터파크", data5) 
+data5 <- gsub("\\^", "", data5)
+data5 <- gsub(paste(c("교촌","마을","한옥"), collapse='|'), "교촌한옥마을", data5)
+data5 <- gsub(paste(c("주상","절리"), collapse='|'), "주상절리", data5)
+data5 <- gsub(paste(c("보문단지","보문"), collapse='|'), "보문관광단지", data5)
+data5 <- gsub(paste(c("달동네","추억","추억의달동네"), collapse='|'), "추억의달동네", data5)
+data5 <- gsub(paste(c("한우","떡갈비"), collapse='|'), "한우수제떡갈비", data5)
+data5 <- gsub(paste(c("게스트","하우스"), collapse='|'), "게스트하우스", data5)
+data5 <- gsub(paste(c("월성","반월성"), collapse='|'), "반월성", data5)
+data5 <- gsub(paste(c("맛집이","맛집"), collapse='|'), "맛집", data5)
+data5 <- gsub(paste(c("교리","김밥","계란지단"), collapse='|'), "교리김밥", data5)
+data5 <- gsub(paste(c("천마","천마총"), collapse='|'), "천마총", data5)
+data5 <- gsub(paste(c("박물관","테디베어","테디베어박물관"), collapse='|'), "테디베어박물관", data5)
+data5 <- gsub("월드", "월드엑스포", data5)
+data5 <- gsub("순두부", "멧돌순두부", data5)
+data5 <- gsub(paste(c("현대","밀면"), collapse='|'), "현대밀면", data5)
+data5 <- gsub("한정", "이조한정식", data5)
+data5 <- gsub("블루", "블루원워터파크",data5)
+
+data5 <- lapply(data5, unique) # 각 리스트안에서 중복된 단어들 제거하기
+
+data6 <- sapply(data5, function(x) {Filter(function(y) {nchar(y) <= 6 & nchar(y) > 1 } , x ) } ) 
+
+# Step 5. 추출된 명사들을 집계하여 현황 보기 ? 추가적인 불용어 제거 작업 위해서 수행
+wordcount <- table(unlist(data6)) 
+wordcount <- Filter(function(x) {nchar(x) <= 10} ,wordcount)
+head(sort(wordcount, decreasing=T),100)
+
+# Step 6. 추가로 확인된 불용어를 다시 제거하기
+# 불용어들을 파일에 저장한 후 불러와서 제거하는 방식 사용
+
+txt <- readLines("경주gsub.txt")
+txt
+cnt_txt <- length(txt)
+cnt_txt
+for( i in 1:cnt_txt) {
+      data5 <- gsub((txt[i]),"", data5)  
+      }
+head(data5,5)
+
+data6 <- sapply(data5, function(x) {Filter(function(y) { nchar(y) >=2 },x)} )
+head(data6,5)
+ 
+wordcount <- table(unlist(data6))
+head(sort(wordcount, decreasing=T),100)
+
+# Step 7. 워드 클라우드로 시각화 하기
+library(RColorBrewer) 
+palete <- brewer.pal(7,"Set2")
+
+wordcloud(names(wordcount),freq=wordcount,scale=c(5,1),rot.per=0.25,min.freq=28,
+random.order=F,random.color=T,colors=palete)
+
+# Step 8- 언급된 빈도에 따라 색깔을 다르게 설정하기 
+
+wordcount <- table(unlist(data6))
+data54 <- head(sort(wordcount , decreasing=T) , 100)
+
+write.table(data54,"data54.txt")
+data64 <- read.table("data54.txt")
+
+# 언급 빈도에 따라 색깔을 다르게 설정함
+# 예제는 100번 이상 언급된 키워드는 빨간색으로 표시하고 나머지는 회색으로 표시하여 강조함
+
+col4 <- ifelse(data64$Freq >= 100 , "red" , "gray") 
+wordcloud(data64$Var1 , freq=data64$Freq , scale=c(4,1) , rot.per=0.25 , min.freq=1 ,
+            random.order=F , ordered.color=T , colors=col4 )
+
+# Step 8. wordcloud2 ( ) 패키지로 시각화 하기
+
+# wordcloud2( ) 패키지로 시각화 하기
+install.packages("wordcloud2")
+library(wordcloud2)
+wordcount2 <- head(sort(wordcount, decreasing=T),100)
+wordcloud2(wordcount2,gridSize=1,size=0.5,shape="star")
+
+# shape = “diamond” , “star” , “circle”  등 다양한 옵션 사용 가능함.
+
+# 3. tm( ) 패키지를 활용한 영어 텍스트 분석하기
+#Step 1. 작업 디렉토리 지정 해야겠죠?
+ setwd("c:\\temp")
+
+#Step 2. 필요한 패키지를 설치합니다. 여기서는 tm 패키지와 wordcloud 패키지를 설치합니다.
+ install.packages("wordcloud")
+ install.packages("tm")
+ library("wordcloud")
+ library("tm")
+
+#Step 3. 데이터를 불러 옵니다.
+ data1 <- readLines("tm_test11.txt")
+ data1
+
+#Step 4. 위 4 줄을 tm 패키지가 처리할 수 있는 형태인 Corpus (말뭉치) 형태로 변환합니다.
+ corp1 <- VCorpus(VectorSource(data1)) # 벡터이므로 VectorSource( ) 함수 사용함
+ corp1.
+
+# Step 5. tm 패키지가 분석 할 수 있는 Term-Document 형식의 Matrix 로 변환해야 합니다.
+
+  tdm <- TermDocumentMatrix(corp1)
+  tdm
+ m <- as.matrix(tdm)
+ m
+ corp2 <- tm_map(corp1,stripWhitespace) # 여러 개의 공백을 하나의 공백으로 변환합니다
+ corp2 <- tm_map(corp2,tolower) # 대문자가 있을 경우 소문자로 변환합니다
+ corp2 <- tm_map(corp2,removeNumbers) # 숫자를 제거합니다
+ corp2 <- tm_map(corp2,removePunctuation)  # 마침표,콤마,세미콜론,콜론 등의 문자 제거
+ corp2 <- tm_map(corp2,PlainTextDocument)  
+ sword2 <- c(stopwords('en'),"and","but","not")# 기본 불용어 외 불용어로 쓸 단어 추가하기
+ corp2 <- tm_map(corp2,removeWords,sword2) # 불용어 제거하기 (전치사 , 관사 등)
+
+# 불용어나 공백 등이 제거 된 후 다시 Term-Document Matrix 를 생성해서 볼까요?
+
+ tdm2 <- TermDocumentMatrix(corp2)
+ tdm2
+ m2 <- as.matrix(tdm2)
+ m2
+ colnames(m2) <- c(1:4)
+ m2
+  slist <- readLines("stopword_list.txt") # 불용어 리스트를 불러 옵니다
+  sword3 <- c(stopwords('en'),slist) # 기본 불용어 외 불용어로 쓸 단어 추가하기
+  corp2 <- tm_map(corp2,removeWords,sword3)
+  tdm2 <- TermDocumentMatrix(corp2)
+  tdm2
+  m2 <- as.matrix(tdm2)
+  colnames(m2) <- c(1:4)
+  m2
+ freq1 <- sort(rowSums(m2),decreasing=T)
+ head(freq1,20)
+ freq2 <- sort(colSums(m2),decreasing=T)
+ head(freq2,20)
+
+ findFreqTerms(tdm2,2) 
+ findAssocs(tdm2,"apple",0.5)
+ findAssocs(tdm2,"apple",0.6)
+ library(RColorBrewer) 
+ palete <- brewer.pal(7,"Set3")
+ wordcloud(names(freq1) , freq=freq1 , scale=c(5,1) , min.freq=1 , rot.per=0.5 , 
+ colors=palete , random.order=F , random.color=T)
+
+
+
+# 예제 2. 스티브 잡스 연설문 분석하기
+ setwd("c:\\temp")
+ data1 <- readLines("steve.txt")
+ data1
+
+ corp1 <- VCorpus(VectorSource(data1)) # 말뭉치로 변환하기
+ corp1
+
+ corp2 <- tm_map(corp1,stripWhitespace) # 여러개의 공백을 하나의 공백으로 변환합니다
+ corp2 <- tm_map(corp2,tolower) # 대문자가 있을 경우 소문자로 변환합니다
+ corp2 <- tm_map(corp2,removeNumbers) # 숫자를 제거합니다
+ corp2 <- tm_map(corp2,removePunctuation) # 마침표,콤마,세미콜론,콜론 등 문자 제거합니다
+ corp2 <- tm_map(corp2,PlainTextDocument)  
+ stopword2 <- c(stopwords('en'),"and","but") # 기본 불용어 외에 불용어로 쓸 단어 추가하기
+ corp2 <- tm_map(corp2,removeWords,stopword2) # 불용어 제거하기 (전치사 , 관사 등)
+ corp3 <- TermDocumentMatrix(corp2,control=list(wordLengths=c(1,Inf)))
+ corp3
+ findFreqTerms(corp3,10) 
+ findAssocs(corp3,"apple",0.5) 
+
+ corp4 <- as.matrix(corp3)
+ corp4
+
+ freq1 <- sort(rowSums(corp4),decreasing=T)
+ freq2 <- sort(colSums(corp4),decreasing=T)
+ head(freq2,20)
+
+ dim(corp4)
+ colnames(corp4) <- c(1:59)
+ freq2 <- sort(colSums(corp4),decreasing=T)
+
+ palete <- brewer.pal(7,"Set3")
+ wordcloud(names(freq1),freq=freq1,scale=c(5,1),min.freq=5,colors=palete,random.order=F,
+                random.color=T)
+
+
+
+# 5. 네이버 연관 검색어를 활용한 텍스트 분석 및 시각화
+setwd("c:\\temp")
+library(wordcloud)
+data64 <- read.csv("동부화재_연관키워드2.csv")
+data64 
+palete <- brewer.pal(7,"Set2")
+wordcloud(data64$연관키워드,freq=data64$월간PC검색수,scale=c(5,0.8),
+rot.per=0.25, min.freq=10, random.order=F,random.color=T,colors=palete)
+
+
+# Chap 2. 다양한 시각화 기법들 소개
+
+ install.packages(“ggplot2”)
+ library(“ggplot2”)
+
+apropos("^geom*_")
+
+# 6. geom_bar( ) 함수 ? bar chart 그리기
+
+# geom_bar( ) 함수 활용하기
+
+data1 <- read.csv("사원별판매현황_홍길동.csv")
+data1
+
+days <- data1$요일
+ggplot(data1,aes(x=요일,y=실적)) + geom_bar(stat="identity" ) +
+       scale_x_discrete(limits=days)
+
+# 색깔 변경하기
+ggplot(data1,aes(x=요일,y=실적)) + 
+       geom_bar(stat="identity" , fill="blue" ) +
+       scale_x_discrete(limits=days)
+
+# 실적에 따라 색깔 변경하기
+# 실적이 90 이상인 경우 "red" 로 출력 , 나머지는 "blue" 로 출력하기
+
+col <- ifelse(data1$실적 >= 90 , "red" , "blue")
+col
+ggplot(data1,aes(x=요일,y=실적)) + 
+       geom_bar(stat="identity" , fill=col ) +
+       scale_x_discrete(limits=days)
+
+
+# 값의 크기가 큰 순서대로 출력하기
+
+data1$요일 <- factor(data1$요일, 
+                    levels=data1$요일[order(data1$실적)])
+
+ggplot(data1,aes(x=요일,y=실적)) + 
+       geom_bar(stat="identity" , fill=col ) 
+       
+# 값의 크기가 작은 순서대로 출력하기
+
+data1$요일 <- factor(data1$요일, 
+                    levels=data1$요일[order(-data1$실적)])
+
+ggplot(data1,aes(x=요일,y=실적)) + 
+       geom_bar(stat="identity" , fill=col ) 
+       
+
+# 여러건의 데이터를 출력하기
+
+data2 <- read.csv("사원별판매현황_전체.csv")
+days2 <- unique(data2$요일) 
+ggplot(data2,aes(x=요일,y=실적, fill=이름)) + 
+       geom_bar(stat="identity" ) +
+       scale_x_discrete(limits=days2)
+
+# 실적 금액 표시하기
+data3 <- data2 %>%
+         select(이름,요일,실적) %>%
+         group_by(요일) %>%
+         arrange(desc(이름)) %>%
+         mutate(위치=cumsum(실적)-0.5*실적)
+head(data3,5)
+
+ggplot(data3,aes(x=요일,y=실적, fill=이름)) + 
+       geom_bar(stat="identity" ) +
+       geom_text(aes(y=위치,label=paste(실적,"만원")),size=3) +
+       scale_x_discrete(limits=days2)+
+       guides(fill=guide_legend(reverse=F))
+
+# 옆으로 요일별로 그룹핑해서 같이 출력하는거 만들기
+
+ggplot(data2,aes(x=요일,y=실적,fill=이름)) + 
+       geom_bar(stat="identity", position="dodge") +
+       geom_text(aes(y=실적,label=paste(실적,"만원")),size=3,angle=90,
+                 position = position_dodge(0.9)) +
+       scale_x_discrete(limits=days2)+
+       guides(fill=guide_legend(reverse=F))
+
+# 사람이름별 요일별로 그룹핑 해서 출력하기
+
+data6 <- read.csv("사원별판매현황_전체2.csv")
+ggplot(data6,aes(x=이름,y=실적,fill=요일)) + 
+       geom_bar(stat="identity", position="dodge" ) +
+       geom_text(aes(y=실적,label=paste(실적,"만원")),size=3,angle=90,
+                 hjust=1, position = position_dodge(0.9)) 
+
+# 퀴즈 3번 답
+##############################################################
+## 경주 여행지 추천 분석 소스코드
+##############################################################
+setwd("c:\\temp\\")  
+#install.packages("KoNLP") 
+#install.packages("wordcloud") 
+#install.packages("stringr")
+
+library(stringr)
+library(KoNLP)  
+library(wordcloud)
+ 
+useSejongDic() 
+
+
+data1 <- readLines("경주여행_지식인_2016.txt",encoding="UTF-8")
+head(data1,10)
+length(data1)
+
+data1 <- unique(data1)
+ 
+data2 <- str_replace_all(data1,"[^[:alpha:][:digit:]]"," ")
+
+data3 <- extractNoun(data2)
+head(data3,5)
+
+data4 <- lapply(data3, unique) # 각 리스트안에서 중복된 단어들 제거하기
+
+data5 <- gsub("\\d+", "", unlist(data4)) 
+data5 <- gsub("스프링", "스프링돔", data5) 
+data5 <- gsub("파크", "워터파크", data5) 
+data5 <- gsub("\\^", "", data5)
+data5 <- gsub(paste(c("교촌","마을","한옥"),collapse='|'), "교촌한옥마을", data5)
+data5 <- gsub(paste(c("주상","절리"),collapse='|'), "주상절리", data5)
+data5 <- gsub(paste(c("보문단지","보문"),collapse='|'), "보문관광단지", data5)
+data5 <- gsub(paste(c("달동네","추억","추억의달동네"),collapse='|'), "추억의달동네", data5)
+data5 <- gsub(paste(c("한우","떡갈비"),collapse='|'), "한우수제떡갈비", data5)
+data5 <- gsub(paste(c("게스트","하우스"),collapse='|'), "게스트하우스", data5)
+data5 <- gsub(paste(c("월성","반월성"),collapse='|'), "반월성", data5)
+data5 <- gsub(paste(c("맛집이","맛집"),collapse='|'), "맛집", data5)
+data5 <- gsub(paste(c("교리","김밥","계란지단"),collapse='|'), "교리김밥", data5)
+data5 <- gsub(paste(c("천마","천마총"),collapse='|'), "천마총", data5)
+data5 <- gsub(paste(c("박물관","테디베어","테디베어박물관"),collapse='|'), "테디베어박물관", data5)
+data5 <- gsub("월드", "월드엑스포", data5)
+data5 <- gsub("순두부", "멧돌순두부", data5)
+data5 <- gsub(paste(c("현대","밀면"),collapse='|'), "현대밀면", data5)
+data5 <- gsub("한정", "이조한정식", data5)
+data5 <- gsub("블루", "블루원워터파크",data5)
+
+data5 <- lapply(data5, unique) # 각 리스트안에서 중복된 단어들 제거하기
+
+data6 <- sapply(data5, function(x) {Filter(function(y) {nchar(y) <= 6 && nchar(y) > 1 },x)} ) # 글자수로 제거하기, 2글자 이상 6글자 이하만 출력
+
+wordcount <- table(unlist(data6)) 
+wordcount <- Filter(function(x) {nchar(x) <= 10} ,wordcount)
+head(sort(wordcount, decreasing=T),100)
+
+txt <- readLines("경주gsub.txt")
+txt
+cnt_txt <- length(txt)
+cnt_txt
+for( i in 1:cnt_txt) {
+      data5 <- gsub((txt[i]),"", data5)  
+      }
+head(data5,5)
+
+data6 <- sapply(data5, function(x) {Filter(function(y) { nchar(y) >=2 },x)} )
+head(data6,5)
+ 
+#아래 과정이 필터링이 완료된 단어들을 언급 빈도수로 집계하는 과정입니다.
+wordcount <- table(unlist(data6))
+graph15 <- head(sort(wordcount, decreasing=T),15)
+graph15
+write.csv(graph15 , "graph15.txt")
+graph16 <- read.csv("graph15.txt")
+graph16
+
+
+
+# 언급빈도별  높은->낮은 순으로 출력하기
+col <- ifelse(graph16$Freq >= 100 , "red" , "blue")
+col
+keyword <- graph16$Var1
+ggplot(graph16,aes(x=Var1,y=Freq)) + geom_bar(stat="identity",fill=col ) +
+       theme(axis.text.x=element_text(angle=90,hjust=1,vjust=1,
+             size=12) ) + xlab("주요키워드") + ylab("언급빈도수") +
+       scale_x_discrete(limits=keyword)+
+       geom_text(aes(y=Freq-10,label=paste(Freq,"건")),size=4,angle=90,colour="white" )
+
+
+# geom_boxplot( ) 
+
+data8 <- read.csv("학생별시험성적_5명.csv")
+head(data8,6)   
+
+ggplot(data8,aes(x=이름,y=점수))+ geom_boxplot( )
+
+#아웃라이어 표시하기
+ggplot(data8,aes(x=이름,y=점수))+ 
+       geom_boxplot(outlier.colour="red", outlier.shape=2,
+                    outlier.size=4) 
+
+#실제 점수 표시하기
+ggplot(data8,aes(x=이름,y=점수))+ 
+       geom_boxplot(outlier.colour="red", outlier.shape=2,
+                    outlier.size=4) +
+       geom_point( )
+
+#학생 이름별로 다른 색상으로 표시하기
+ggplot(data8,aes(x=이름,y=점수,fill=이름))+ 
+       geom_boxplot(outlier.colour="red", outlier.shape=2,
+                    outlier.size=4) +
+       geom_point( )
+
+
+#학생 이름별로 다른 색상으로 표시하기-색상 직접 지정하기
+ggplot(data8,aes(x=이름,y=점수,fill=이름))+ 
+       geom_boxplot(outlier.colour="red", outlier.shape=2,
+                    outlier.size=4) +
+       geom_point( ) +
+       scale_fill_manual(values=c("red", "blue", "yellow","cyan","pink"))
+
+
+# geom_histogram( ) 
+
+data9 <- data.frame(
+                    "성별" = factor(rep(c("F", "M"), each=200)),
+                    "몸무게" = c(round(rnorm(200, 55),0), 
+                                round(rnorm(200, 58),0))
+                   )
+head(data9,5)
+
+
+
+ggplot(data9, aes(x = 몸무게)) + 
+       geom_histogram(color="black", fill="cyan", alpha=0.8,binwidth=0.5)
+
+ggplot(data9, aes(x = 몸무게)) + 
+       geom_histogram(color="black", fill="cyan", alpha=0.8,binwidth=1)
+
+#geom_density( )
+ggplot(data9, aes(x = 몸무게)) + 
+       geom_density(color="red",fill="yellow",alpha=0.5)  
+
+# 세로 기준선을 주고 싶을 경우
+ggplot(data9, aes(x = 몸무게)) + 
+       geom_density(color="black", fill="yellow", alpha=0.8)+
+       geom_vline(aes(xintercept=mean(몸무게)),
+                  color="red", linetype="dashed", size=1)
+
+# 값 별로 구분해서 그리기
+ggplot(data9, aes(x = 몸무게)) + 
+       geom_density(aes(color=성별,fill=성별), alpha=0.8)
+
+# 각각 세로 기준선을 주고 싶을 경우
+library(dplyr)
+data10 <- data9 %>%
+          group_by(성별) %>%
+          summarise(성별평균값 = mean(몸무게))
+head(data10)
+
+ggplot(data9, aes(x = 몸무게)) + 
+       geom_density(aes(color=성별,fill=성별), alpha=0.8)+
+       geom_vline(data = data10, aes(xintercept = 성별평균값),
+       linetype="dashed",size=1)
+
+
+#geom_histogram( ) + geom_density( )
+
+ggplot(data9, aes(x = 몸무게 , y=..density.. )) + 
+       geom_histogram(color="black", fill="cyan",binwidth=1) +
+       geom_density(color="red",fill="yellow",alpha=0.5)
+
+# (2) igraph( ) 패키지 활용하기
+
+ install.packages(“igraph”)
+ library(“igraph”)
+
+이름 <- c('홍길동 사장','일지매 상무','신사임당 상무','전우치 부장',
+         '김유신 부장','연개소문 과장','광개토 과장','손흥민 대리','강강찬 사원')
+상사이름 <- c('홍길동 사장','홍길동 사장','홍길동 사장','일지매 상무',
+         '신사임당 상무', '전우치 부장','전우치 부장','광개토 과장','손흥민 대리')
+사원테이블 <- data.frame(이름=이름 , 상사이름=상사이름)
+사원테이블
+
+사원테이블2 <- graph.data.frame(사원테이블)
+plot( 사원테이블2 )
+
+#3) 다양한 옵션 활용하기 예제
+# Vertex의 색상을 cyan 으로 변경하기
+
+plot( 사원테이블2 , vertex.color="cyan" )
+
+
+plot( 사원테이블2 , vertex.color="cyan" ,vertex.label=NA , edge.color="red")
+
+# edge 개수 파악하고 재귀 관계 제거하고 그래프 그리기
+
+사원테이블3<- simplify(사원테이블2)
+degree(사원테이블3)
+
+# edge 갯수별로 vertex.label 의 크기를 다르게 지정하기
+dev.new( )
+
+V(사원테이블3)$degree <- degree(사원테이블3) 
+V(사원테이블3)$label.cex <-3*(V(사원테이블3)$degree / max(V(사원테이블3)$degree))
+
+plot(사원테이블3)
+
+# edge 빈도별 버블 크기 다르게 하기
+dev.new( )
+V(사원테이블3)$size <- 10*degree(사원테이블3)
+V(사원테이블3)$size
+V(사원테이블3)$color <- "red"
+
+plot(사원테이블3)
+
+
+# 특정 빈도별로 색상 다르게 지정하기
+dev.new( )
+
+V(사원테이블3)$degree
+V(사원테이블3)$color <- ifelse(V(사원테이블3)$degree >= 3,"red","green")
+V(사원테이블3)$label.color <- ifelse(V(사원테이블3)$degree >= 3,"blue","red")
+
+plot(사원테이블3)
+
+
+# 특정 빈도 이하 제거하기
+dev.new( )
+V(사원테이블3)$degree <- degree(사원테이블3) 
+removeedge <- V(사원테이블3)[degree(사원테이블3) < 2 ]
+사원테이블3 <- delete.vertices(사원테이블3,removeedge)
+
+plot(사원테이블3)
+
+
+# d3Network( ) 패키지를 활용하기
+install.packages("d3Network")
+library(d3Network)
+
+setwd("c:\\temp")
+
+data1 <- read.csv("메르스전염현황.csv")
+head(data1,5)
+
+d3SimpleNetwork(data1 , file="c:\\temp\\mers.html")
+
+
+# [ 예제 ] 트럼프 연설문 분석하기
+
+##############################################
+## tm 패키지를 이용한 키워드추출 ##################
+##############################################
+setwd("c:\\a_temp")
+install.packages("tm")
+library("tm")
+install.packages("wordcloud")
+library("wordcloud")
+install.packages("igraph")
+library(igraph)
+
+data1 <- readLines("trumph.txt") 
+
+shin5 <- VCorpus(VectorSource(data1))
+inspect(shin5)
+
+shin6 <- tm_map(shin5,stripWhitespace) # 여러개의 공백을 하나의 공백으로 변환합니다
+shin6 <- tm_map(shin6,tolower) # 대문자가 있을 경우 소문자로 변환합니다
+shin6 <- tm_map(shin6,removePunctuation)  # 마침표,콤마,세미콜론,콜론 등의 문자 제거
+stopword2 <- c(stopwords('english'),"will","people") # 기본 불용어 외에 불용어로 쓸 
+                                                     # 단어 추가하기
+shin6 <- tm_map(shin6,removeWords,stopword2) # 불용어 제거하기 (전치사 , 관사 등)
+shin6 <- tm_map(shin6,PlainTextDocument)
+inspect(shin6)
+
+shin7 <-TermDocumentMatrix(shin6)
+inspect(shin7)
+
+shin8 <- as.matrix(shin7) # 일반 Matrix 형태로 변환합니다.
+shin8
+nrow(shin8) # 찾은 단어 개수 , 메트릭스에서 행 수가 됩니다.
+
+freq1 <- sort(rowSums(shin8),decreasing=T)
+head(freq1,20)
+
+palete <- brewer.pal(7,"Set2") 
+
+
+wordcloud(names(freq1),freq=freq1,scale=c(5,1),rot.per=0.25,min.freq=3,
+random.order=F,random.color=T,colors=palete)
+ 
+#####################################################################
+############### 워드 클라우드 2 패키지 사용하기 ##########################
+#####################################################################
+install.packages("wordcloud2")
+library(wordcloud2)
+
+wordcount2 <- head(sort(freq1, decreasing=T),100)
+write.table(wordcount2,"wd2.txt")
+wordcount2 <- read.table("wd2.txt",skip=1) # 첫번째 줄 때문에 에러가 발생해서 제거함
+wordcount2
+
+wordcloud2(wordcount2,gridSize=1,size=0.5,shape="diamond")
+
+########################################################################
+################### 연관단어 분석 하기 ##################################
+########################################################################
+
+shin8 <- as.matrix(shin7)
+
+adjmatrix <- shin8 %*% t(shin8)
+adjmatrix
+
+g <- graph.adjacency(adjmatrix,weighted=T,mode="undirected")
+g
+plot(g)
+
+g2 <- simplify(g) # 재귀 관계를 제거한 후 다시 그래프로 출력합니다.
+plot(g2)
+
+
+# 특정 빈도 이하의 엣지를 제거하기
+dev.new( )
+V(g2)$size <- degree(g2)
+V(g2)$size
+V(g2)$color <- rainbow(length(degree(g2)))
+removeedge <- V(g2)[degree(g2) < 80 ]
+g3 <- delete.vertices(g2,removeedge)
+#head(sort(closeness(g2),decreasing=T))
+#head(sort(betweenness(g2),decreasing=T))
+
+plot.igraph(g3, vertex.label=V(g3)$name, vertex.label.cex=0.8, vertex.size=20, layout=layout.fruchterman.reingold.grid)
+
+legend(-0.9,1.5 ,"트럼프 미국 대통령 취임 연설문 키워드 분석   ",cex=1.3,
+fill=NA,border=NA,bg="white" , text.col="red",text.font=3,box.col="red")
+
+## 언급된 수 만큼 가중치를 부여하기
+dev.new( )
+V(g3)$degree <- degree(g3)
+V(g3)$label.cex <-2*(V(g3)$degree / max(V(g3)$degree))
+V(g3)$size <- 10*(V(g3)$degree / max(V(g3)$degree))
+E(g3)$width <- 2*(E(g3)$weight / max(E(g3)$weight))
+
+plot(g3)
+
+legend(-0.9,1.4 ,"트럼프 미국 대통령 취임 연설문 키워드 분석   ",cex=1.3,
+fill=NA,border=NA,bg="white" , text.col="red",text.font=3,box.col="red")
+
+# 특정 빈도별로 색상 다르게 지정하기
+dev.new( )
+V(g3)$color <- ifelse(V(g3)$degree >= 15,"red","green")
+V(g3)$label.color <- ifelse(V(g3)$degree >= 15,"blue","red")
+V(g3)$degree
+plot(g3)
+
+legend(-0.9,1.4 ,"트럼프 미국 대통령 취임 연설문 키워드 분석   ",cex=1.2,
+fill=NA,border=NA,bg="white" , text.col="red",text.font=2,box.col="red")
+
+
+
+
+
+
+
+
+
+
+
+
