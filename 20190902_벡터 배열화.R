@@ -45,3 +45,21 @@ getwd() # working directory 확인
 # setwd('~~~') : set working directory
 # d:\ (X) d:\\ (O) d:/ (O)
 write.table(df, '20190902_test.csv')
+
+
+#Chap 2. R을 활용한 텍스트 분석 소개 소스코드
+
+txt1 <- "Start R programming with R-LOVE book."
+txt1
+
+strsplit(txt1, ' ')
+
+# install.packages('KoNLP')
+library(KoNLP) # Python에 비유하면... import KoNLP
+
+txt2 <- "R맹이 책으로 R 프로그래밍을 시작하세요~!"
+txt2
+
+strsplit(txt2, ' ')
+extractNoun(txt2)
+
